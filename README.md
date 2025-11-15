@@ -2,6 +2,10 @@
 
 A drag-and-drop chatbot flow builder built with Next.js, React Flow, and TypeScript.
 
+### GIF
+
+![chatflow](https://github.com/user-attachments/assets/608d7daf-180c-486a-b730-60237d574c07)
+
 ## Features
 
 - **Text Message Nodes**: Create and edit text messages in your chatbot flow
