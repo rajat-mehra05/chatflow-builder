@@ -2,11 +2,19 @@ import { FLOW_EDGE_TYPE, FlowEdge } from '@/types/flow-types';
 
 /**
  * Creates a new flow edge with empty condition.
+ * Accepts optional handle IDs to preserve connection metadata from canvas draws.
  */
-export const createFlowEdge = (sourceId: string, targetId: string): FlowEdge => ({
+export const createFlowEdge = (
+  sourceId: string,
+  targetId: string,
+  sourceHandle?: string | null,
+  targetHandle?: string | null,
+): FlowEdge => ({
   id: crypto.randomUUID(),
   source: sourceId,
   target: targetId,
+  sourceHandle,
+  targetHandle,
   type: FLOW_EDGE_TYPE,
   data: { condition: '' },
 });

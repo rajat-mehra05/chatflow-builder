@@ -32,32 +32,30 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
     updateEdgeData(edgeId, { condition });
   };
 
-  // --- Parameter helpers ---
+  // --- Parameter helpers (array-based to avoid key collisions) ---
 
   const handleParamAdd = (edge: FlowEdge) => {
-    const entries = Object.entries(edge.data?.parameters || {});
-    entries.push(['', '']);
-    updateEdgeData(edge.id, { parameters: Object.fromEntries(entries) });
+    const params = [...(edge.data?.parameters || [])];
+    params.push({ key: '', value: '' });
+    updateEdgeData(edge.id, { parameters: params });
   };
 
   const handleParamRemove = (edge: FlowEdge, idx: number) => {
-    const entries = Object.entries(edge.data?.parameters || {});
-    entries.splice(idx, 1);
-    updateEdgeData(edge.id, {
-      parameters: entries.length > 0 ? Object.fromEntries(entries) : undefined,
-    });
+    const params = [...(edge.data?.parameters || [])];
+    params.splice(idx, 1);
+    updateEdgeData(edge.id, { parameters: params.length > 0 ? params : undefined });
   };
 
   const handleParamKeyChange = (edge: FlowEdge, idx: number, newKey: string) => {
-    const entries = Object.entries(edge.data?.parameters || {});
-    entries[idx] = [newKey, entries[idx][1]];
-    updateEdgeData(edge.id, { parameters: Object.fromEntries(entries) });
+    const params = [...(edge.data?.parameters || [])];
+    params[idx] = { ...params[idx], key: newKey };
+    updateEdgeData(edge.id, { parameters: params });
   };
 
   const handleParamValueChange = (edge: FlowEdge, idx: number, newValue: string) => {
-    const entries = Object.entries(edge.data?.parameters || {});
-    entries[idx] = [entries[idx][0], newValue];
-    updateEdgeData(edge.id, { parameters: Object.fromEntries(entries) });
+    const params = [...(edge.data?.parameters || [])];
+    params[idx] = { ...params[idx], value: newValue };
+    updateEdgeData(edge.id, { parameters: params });
   };
 
   return (
@@ -68,6 +66,7 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
           Outgoing Edges ({outgoingEdges.length})
         </h3>
         <button
+          type="button"
           onClick={() => setAddingEdge(true)}
           className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
         >
@@ -93,6 +92,7 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
             ))}
           </select>
           <button
+            type="button"
             onClick={() => setAddingEdge(false)}
             className="text-xs text-gray-500 hover:text-gray-700"
           >
@@ -108,7 +108,7 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
 
       {/* Edge list */}
       {outgoingEdges.map((edge) => {
-        const paramEntries = Object.entries(edge.data?.parameters || {});
+        const params = edge.data?.parameters || [];
 
         return (
           <div key={edge.id} className="border border-gray-200 rounded-lg p-3 space-y-2 bg-white">
@@ -118,6 +118,7 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
                 &rarr; {getTargetDisplayId(edge.target)}
               </span>
               <button
+                type="button"
                 onClick={() => deleteEdge(edge.id)}
                 className="text-gray-400 hover:text-red-500 transition-colors"
                 aria-label="Delete edge"
@@ -145,32 +146,34 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs text-gray-500">Parameters</label>
                 <button
+                  type="button"
                   onClick={() => handleParamAdd(edge)}
                   className="text-xs text-indigo-600 hover:text-indigo-800"
                 >
                   + Add
                 </button>
               </div>
-              {paramEntries.length === 0 && (
+              {params.length === 0 && (
                 <p className="text-xs text-gray-300 italic">None</p>
               )}
-              {paramEntries.map(([key, value], idx) => (
+              {params.map((param, idx) => (
                 <div key={idx} className="flex gap-1 mb-1">
                   <input
                     type="text"
-                    value={key}
+                    value={param.key}
                     onChange={(e) => handleParamKeyChange(edge, idx, e.target.value)}
                     className="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 rounded"
                     placeholder="key"
                   />
                   <input
                     type="text"
-                    value={value}
+                    value={param.value}
                     onChange={(e) => handleParamValueChange(edge, idx, e.target.value)}
                     className="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 rounded"
                     placeholder="value"
                   />
                   <button
+                    type="button"
                     onClick={() => handleParamRemove(edge, idx)}
                     className="text-gray-400 hover:text-red-500 px-1 flex-shrink-0"
                     aria-label="Remove parameter"

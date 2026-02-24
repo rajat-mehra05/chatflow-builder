@@ -47,11 +47,11 @@ export const FlowCanvas: React.FC = () => {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const { source, target } = connection;
+      const { source, target, sourceHandle, targetHandle } = connection;
       if (!source || !target) return;
       setEdges((eds) => {
         if (isDuplicateEdge(eds, source, target)) return eds;
-        return [...eds, createFlowEdge(source, target)];
+        return [...eds, createFlowEdge(source, target, sourceHandle, targetHandle)];
       });
     },
     [setEdges]

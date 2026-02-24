@@ -27,10 +27,11 @@ export interface FlowNodeData {
  * Data payload for flow edges.
  * condition: the text label displayed on the edge.
  * parameters: optional key-value pairs (omitted from JSON when empty).
+ * Stored as array to keep entries distinct during editing; converted to Record on export.
  */
 export interface FlowEdgeData {
   condition: string;
-  parameters?: Record<string, string>;
+  parameters?: Array<{ key: string; value: string }>;
 }
 
 /**
