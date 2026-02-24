@@ -18,6 +18,13 @@ const migrateV1toV2 = (raw: Record<string, unknown>): PersistedFlowState => {
   const oldNodes = (raw.nodes as Array<Record<string, unknown>>) || [];
   const oldEdges = (raw.edges as FlowEdge[]) || [];
 
+  // Determine start node: explicit marker > node with no incoming edges > first node
+  const incomingTargets = new Set(oldEdges.map((e) => e.target));
+  const startNodeId =
+    oldNodes.find((n) => (n.data as Record<string, unknown>)?.isStart)?.id ??
+    oldNodes.find((n) => !incomingTargets.has(n.id as string))?.id ??
+    oldNodes[0]?.id;
+
   const migratedNodes: FlowNode[] = oldNodes.map((oldNode, index) => {
     const oldData = (oldNode.data || {}) as Record<string, string>;
     const description = oldData.text || oldData.buttonText || '';
@@ -26,7 +33,7 @@ const migrateV1toV2 = (raw: Record<string, unknown>): PersistedFlowState => {
       displayId: `node_${index + 1}`,
       description,
       prompt: oldData.buttonValue || '',
-      isStart: index === 0,
+      isStart: oldNode.id === startNodeId,
     };
 
     return {
