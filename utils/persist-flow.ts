@@ -6,6 +6,7 @@ import {
   PersistedFlowState,
   CURRENT_SCHEMA_VERSION,
   FLOW_NODE_TYPE,
+  FLOW_EDGE_TYPE,
 } from '@/types/flow-types';
 
 const STORAGE_KEY = 'chatflow-builder-flow';
@@ -45,9 +46,29 @@ const migrateV1toV2 = (raw: Record<string, unknown>): PersistedFlowState => {
   });
 
   return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: 2,
     nodes: migratedNodes,
     edges: oldEdges,
+  };
+};
+
+/**
+ * Migrates v2 data to v3 format.
+ * Adds type and data (condition, parameters) to edges.
+ */
+const migrateV2toV3 = (parsed: PersistedFlowState): PersistedFlowState => {
+  const edges: FlowEdge[] = (parsed.edges as Array<Record<string, unknown>>).map((edge) => ({
+    ...edge,
+    type: FLOW_EDGE_TYPE,
+    data: {
+      condition: (edge.label as string) || '',
+    },
+  })) as FlowEdge[];
+
+  return {
+    schemaVersion: 3,
+    nodes: parsed.nodes,
+    edges,
   };
 };
 
@@ -70,16 +91,17 @@ export const loadFlowFromStorage = (): FlowState | null => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw);
+    let parsed = JSON.parse(raw);
     if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
       return null;
     }
 
-    // No schemaVersion => legacy v1 data, migrate
+    // Migration chain: v1 → v2 → v3
     if (!parsed.schemaVersion) {
-      const migrated = migrateV1toV2(parsed);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-      return { nodes: migrated.nodes, edges: migrated.edges };
+      parsed = migrateV1toV2(parsed);
+    }
+    if (parsed.schemaVersion === 2) {
+      parsed = migrateV2toV3(parsed);
     }
 
     // Future version — don't corrupt forward-versioned data
@@ -88,6 +110,8 @@ export const loadFlowFromStorage = (): FlowState | null => {
       return null;
     }
 
+    // Persist migrated data
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
     return { nodes: parsed.nodes, edges: parsed.edges };
   } catch (error) {
     console.error('Failed to load flow from localStorage:', error);

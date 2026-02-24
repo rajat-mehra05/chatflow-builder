@@ -8,7 +8,6 @@ import ReactFlow, {
   OnNodesChange,
   OnEdgesChange,
   Connection,
-  addEdge,
   applyNodeChanges,
   applyEdgeChanges,
   NodeChange,
@@ -18,9 +17,11 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { flowNodeTypes } from './flow-node-registry';
+import { flowEdgeTypes } from './flow-edge-registry';
 import { defaultEdgeOptions, defaultViewport } from '@/lib/reactflow-canvas-config';
 import { createFlowNode } from '@/utils/create-flow-node';
-import { FLOW_NODE_TYPE, FlowNode } from '@/types/flow-types';
+import { createFlowEdge, isDuplicateEdge } from '@/utils/create-flow-edge';
+import { FLOW_NODE_TYPE, FlowNode, FlowEdge } from '@/types/flow-types';
 
 /**
  * Main React Flow canvas component.
@@ -39,14 +40,19 @@ export const FlowCanvas: React.FC = () => {
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
-      setEdges((eds) => applyEdgeChanges(changes, eds));
+      setEdges((eds) => applyEdgeChanges(changes, eds) as FlowEdge[]);
     },
     [setEdges]
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
+      const { source, target } = connection;
+      if (!source || !target) return;
+      setEdges((eds) => {
+        if (isDuplicateEdge(eds, source, target)) return eds;
+        return [...eds, createFlowEdge(source, target)];
+      });
     },
     [setEdges]
   );
@@ -95,6 +101,7 @@ export const FlowCanvas: React.FC = () => {
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={flowNodeTypes}
+        edgeTypes={flowEdgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         defaultViewport={defaultViewport}
         fitView

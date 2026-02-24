@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
+import { EdgeListSection } from './EdgeListSection';
 
 /**
  * Node settings panel.
@@ -122,6 +123,12 @@ export const NodeSettingsPanel: React.FC = () => {
             />
           </button>
         </div>
+
+        {/* Divider */}
+        <hr className="border-gray-200" />
+
+        {/* Outgoing Edges */}
+        <EdgeListSection nodeId={selectedNode.id} />
       </div>
     </div>
   );
