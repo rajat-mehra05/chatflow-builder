@@ -16,24 +16,18 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useChatbotFlow } from '@/components/providers/ChatbotFlowProvider';
-import { chatbotNodeTypes } from './chatbot-node-registry';
+import { useFlow } from '@/components/providers/FlowProvider';
+import { flowNodeTypes } from './flow-node-registry';
 import { defaultEdgeOptions, defaultViewport } from '@/lib/reactflow-canvas-config';
-import { createChatbotNode } from '@/utils/create-chatbot-node';
-import { ChatbotNodeType, FlowNode } from '@/types/chatbot-flow-types';
+import { createFlowNode } from '@/utils/create-flow-node';
+import { FLOW_NODE_TYPE, FlowNode } from '@/types/flow-types';
 
 /**
- * Main React Flow canvas component
- * Handles node/edge changes and drag-drop functionality
+ * Main React Flow canvas component.
+ * Handles node/edge changes, drag-drop, and pane click deselection.
  */
-export const ChatbotFlowCanvas: React.FC = () => {
-  const {
-    nodes,
-    edges,
-    setNodes,
-    setEdges,
-    selectNode,
-  } = useChatbotFlow();
+export const FlowCanvas: React.FC = () => {
+  const { nodes, edges, setNodes, setEdges, selectNode } = useFlow();
   const { screenToFlowPosition } = useReactFlow();
 
   const onNodesChange: OnNodesChange = useCallback(
@@ -60,19 +54,15 @@ export const ChatbotFlowCanvas: React.FC = () => {
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
-      const nodeType = event.dataTransfer.getData('application/reactflow') as ChatbotNodeType;
-      
-      if (!nodeType) {
-        return;
-      }
+      const nodeType = event.dataTransfer.getData('application/reactflow');
+      if (nodeType !== FLOW_NODE_TYPE) return;
 
-      // Convert screen coordinates to flow coordinates
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      const newNode = createChatbotNode(nodeType, position);
+      const newNode = createFlowNode(position);
       setNodes((nds) => [...nds, newNode]);
     },
     [setNodes, screenToFlowPosition]
@@ -90,6 +80,10 @@ export const ChatbotFlowCanvas: React.FC = () => {
     [selectNode]
   );
 
+  const onPaneClick = useCallback(() => {
+    selectNode(null);
+  }, [selectNode]);
+
   return (
     <div className="w-full h-full" onDrop={onDrop} onDragOver={onDragOver}>
       <ReactFlow
@@ -99,7 +93,8 @@ export const ChatbotFlowCanvas: React.FC = () => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
-        nodeTypes={chatbotNodeTypes}
+        onPaneClick={onPaneClick}
+        nodeTypes={flowNodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         defaultViewport={defaultViewport}
         fitView

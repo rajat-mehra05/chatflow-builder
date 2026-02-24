@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Chatbot Flow Builder',
-  description: 'Build chatbot flows with drag and drop',
+  title: 'Flow Builder',
+  description: 'Build flows with drag and drop',
 };
 
 export default function RootLayout({

@@ -1,21 +1,18 @@
-import { FlowNode, FlowEdge } from '@/types/chatbot-flow-types';
+import { FlowNode, FlowEdge } from '@/types/flow-types';
 
 /**
- * Gets all nodes that have no incoming edges (empty target handles)
+ * Gets all nodes that have no incoming edges (empty target handles).
  */
 export const getNodesWithEmptyTargetHandles = (
   nodes: FlowNode[],
   edges: FlowEdge[]
 ): FlowNode[] => {
-  // Get all target node IDs from edges
   const targetNodeIds = new Set(edges.map((edge) => edge.target));
-
-  // Return nodes that are not targets of any edge
   return nodes.filter((node) => !targetNodeIds.has(node.id));
 };
 
 /**
- * Checks if a source handle already has a connection
+ * Checks if a node has at least one outgoing connection.
  */
 export const hasSourceConnection = (
   nodeId: string,
