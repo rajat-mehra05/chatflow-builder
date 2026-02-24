@@ -24,6 +24,12 @@ import { createFlowEdge, isDuplicateEdge } from '@/utils/create-flow-edge';
 import { FLOW_NODE_TYPE, FlowNode, FlowEdge } from '@/types/flow-types';
 import { useFlowValidation } from '@/hooks/useFlowValidation';
 
+const BLOCKING_WARNINGS = new Set([
+  'Node ID is empty',
+  'Duplicate node ID',
+  'Description is empty',
+]);
+
 /**
  * Main React Flow canvas component.
  * Handles node/edge changes, drag-drop, and pane click deselection.
@@ -33,13 +39,17 @@ export const FlowCanvas: React.FC = () => {
   const { screenToFlowPosition } = useReactFlow();
   const { nodeWarnings } = useFlowValidation(nodes, edges);
 
-  // Mark nodes with blocking validation errors via CSS className
+  // Enrich nodes: inject _warnings for badge display, add CSS class for blocking errors
   const enrichedNodes = useMemo(() => {
-    const BLOCKING = new Set(['Node ID is empty', 'Duplicate node ID', 'Description is empty']);
     return nodes.map((n) => {
       const warnings = nodeWarnings.get(n.id);
-      const hasError = warnings?.some((w) => BLOCKING.has(w));
-      return hasError ? { ...n, className: 'validation-error' } : n;
+      if (!warnings || warnings.length === 0) return n;
+      const hasBlockingError = warnings.some((w) => BLOCKING_WARNINGS.has(w));
+      return {
+        ...n,
+        className: hasBlockingError ? 'validation-error' : n.className,
+        data: { ...n.data, _warnings: warnings },
+      };
     });
   }, [nodes, nodeWarnings]);
 

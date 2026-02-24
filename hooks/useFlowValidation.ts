@@ -80,17 +80,14 @@ export const useFlowValidation = (
         addWarning(node.id, 'Description is empty');
       }
 
-      // Disconnected node: no incoming edges and not a start node
+      // Connectivity checks (orphaned is superset of disconnected — mutually exclusive)
       const incoming = incomingCount.get(node.id) || 0;
       const outgoing = outgoingCount.get(node.id) || 0;
 
-      if (!node.data.isStart && incoming === 0 && nodes.length > 1) {
-        addWarning(node.id, 'Disconnected: no incoming edges');
-      }
-
-      // Orphaned node: no edges at all
       if (incoming === 0 && outgoing === 0 && nodes.length > 1) {
         addWarning(node.id, 'Orphaned: no connections');
+      } else if (!node.data.isStart && incoming === 0 && nodes.length > 1) {
+        addWarning(node.id, 'Disconnected: no incoming edges');
       }
     }
 

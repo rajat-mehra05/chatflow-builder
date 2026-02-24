@@ -30,7 +30,7 @@ const FlowNodeComponent: React.FC<NodeProps<FlowNodeData>> = ({
       {hasWarnings && (
         <div
           className="absolute -top-2 -right-2 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm"
-          title={_warnings.join('\n')}
+          title={_warnings?.join('\n') ?? ''}
         >
           !
         </div>

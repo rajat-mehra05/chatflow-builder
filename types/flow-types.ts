@@ -33,7 +33,7 @@ export interface FlowNodeData {
  */
 export interface FlowEdgeData {
   condition: string;
-  parameters?: Array<{ key: string; value: string }>;
+  parameters?: Array<{ id: string; key: string; value: string }>;
 }
 
 /**

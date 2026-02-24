@@ -38,8 +38,12 @@ export const FlowSaveButton: React.FC = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'flow.json';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
 
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);

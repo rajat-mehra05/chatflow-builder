@@ -24,23 +24,24 @@ export const validateFlow = (
     errors.push({ message: 'No start node set', severity: 'error' });
   }
 
-  // Build displayId frequency map for duplicate detection
+  // Build displayId frequency map for duplicate detection (normalized)
   const idCount = new Map<string, number>();
   for (const node of nodes) {
-    const id = node.data.displayId;
-    idCount.set(id, (idCount.get(id) || 0) + 1);
+    const normalized = node.data.displayId.trim();
+    idCount.set(normalized, (idCount.get(normalized) || 0) + 1);
   }
 
   // Per-node validation
   for (const node of nodes) {
-    const { displayId, description } = node.data;
+    const { description } = node.data;
+    const normalized = node.data.displayId.trim();
 
-    if (!displayId.trim()) {
+    if (!normalized) {
       errors.push({
         nodeId: node.id, field: 'displayId',
         message: 'Node ID is required', severity: 'error',
       });
-    } else if ((idCount.get(displayId) || 0) > 1) {
+    } else if ((idCount.get(normalized) || 0) > 1) {
       errors.push({
         nodeId: node.id, field: 'displayId',
         message: 'Duplicate node ID', severity: 'error',

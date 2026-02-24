@@ -66,7 +66,7 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
 
   const handleParamAdd = (edge: FlowEdge) => {
     const params = [...(edge.data?.parameters || [])];
-    params.push({ key: '', value: '' });
+    params.push({ id: crypto.randomUUID(), key: '', value: '' });
     updateEdgeData(edge.id, { parameters: params });
   };
 
@@ -149,7 +149,14 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
               </span>
               <button
                 type="button"
-                onClick={() => deleteEdge(edge.id)}
+                onClick={() => {
+                  deleteEdge(edge.id);
+                  setTouchedConditions((prev) => {
+                    const next = new Set(prev);
+                    next.delete(edge.id);
+                    return next;
+                  });
+                }}
                 className="text-gray-400 hover:text-red-500 transition-colors"
                 aria-label="Delete edge"
               >
@@ -194,7 +201,7 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
                 <p className="text-xs text-gray-300 italic">None</p>
               )}
               {params.map((param, idx) => (
-                <div key={idx} className="flex gap-1 mb-1">
+                <div key={param.id || idx} className="flex gap-1 mb-1">
                   <DraftInput
                     value={param.key}
                     onCommit={(val) => handleParamKeyChange(edge, idx, val)}

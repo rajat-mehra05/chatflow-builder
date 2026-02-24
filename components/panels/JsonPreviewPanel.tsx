@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { flowToSchema } from '@/utils/flow-to-schema';
 
@@ -83,16 +83,22 @@ export const JsonPreviewPanel: React.FC = () => {
   const { nodes, edges } = useFlow();
   const [collapsed, setCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => clearTimeout(copyTimeoutRef.current);
+  }, []);
 
   const schema = useMemo(() => flowToSchema(nodes, edges), [nodes, edges]);
   const jsonString = useMemo(() => JSON.stringify(schema, null, 2), [schema]);
   const highlighted = useMemo(() => highlightJson(jsonString), [jsonString]);
 
   const handleCopy = async () => {
+    clearTimeout(copyTimeoutRef.current);
     try {
       await navigator.clipboard.writeText(jsonString);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
       const textarea = document.createElement('textarea');
@@ -102,7 +108,7 @@ export const JsonPreviewPanel: React.FC = () => {
       document.execCommand('copy');
       document.body.removeChild(textarea);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -112,8 +118,12 @@ export const JsonPreviewPanel: React.FC = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'flow.json';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
   };
 
   if (collapsed) {
