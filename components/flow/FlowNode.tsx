@@ -13,14 +13,28 @@ const FlowNodeComponent: React.FC<NodeProps<FlowNodeData>> = ({
   data,
   selected,
 }) => {
-  const { displayId, description, prompt, isStart } = data;
+  const { displayId, description, prompt, isStart, _warnings } = data;
+  const hasWarnings = _warnings && _warnings.length > 0;
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md border-2 min-w-[220px] max-w-[280px] ${
-        selected ? 'border-blue-500' : 'border-gray-200'
+      className={`bg-white rounded-lg shadow-md border-2 min-w-[220px] max-w-[280px] relative ${
+        selected
+          ? 'border-blue-500'
+          : hasWarnings
+            ? 'border-amber-400'
+            : 'border-gray-200'
       }`}
     >
+      {/* Warning badge */}
+      {hasWarnings && (
+        <div
+          className="absolute -top-2 -right-2 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm"
+          title={_warnings.join('\n')}
+        >
+          !
+        </div>
+      )}
       {/* Header: amber for start node, indigo for regular */}
       <div
         className={`${

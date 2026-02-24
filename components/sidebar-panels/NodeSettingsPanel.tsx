@@ -1,16 +1,25 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { EdgeListSection } from './EdgeListSection';
 
 /**
- * Node settings panel.
- * Edits displayId, description, prompt, and isStart for the selected node.
- * Reads directly from derived selectedNode (always fresh, no local state needed).
+ * Node settings panel with per-field "touched" validation.
+ * Errors show only after a field has been blurred (user interacted and left).
  */
 export const NodeSettingsPanel: React.FC = () => {
-  const { selectedNode, updateNodeData, selectNode, setStartNode } = useFlow();
+  const { selectedNode, nodes, updateNodeData, selectNode, setStartNode } = useFlow();
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Reset touched state when switching to a different node
+  useEffect(() => {
+    setTouched({});
+  }, [selectedNode?.id]);
+
+  const markTouched = useCallback((field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }, []);
 
   if (!selectedNode) return null;
 
@@ -19,6 +28,24 @@ export const NodeSettingsPanel: React.FC = () => {
   const handleChange = (field: 'displayId' | 'description' | 'prompt', value: string) => {
     updateNodeData(selectedNode.id, { [field]: value });
   };
+
+  // --- Validation errors (only shown for touched fields) ---
+  const trimmedId = displayId.trim();
+  const idEmpty = !trimmedId;
+  const idDuplicate =
+    !!trimmedId &&
+    nodes.some((n) => n.id !== selectedNode.id && n.data.displayId.trim() === trimmedId);
+  const descEmpty = !description.trim();
+
+  const idError = touched.displayId
+    ? idEmpty
+      ? 'Node ID is required'
+      : idDuplicate
+        ? 'This ID is already used by another node'
+        : null
+    : null;
+
+  const descError = touched.description && descEmpty ? 'Description is required' : null;
 
   const handleStartToggle = () => {
     if (!isStart) {
@@ -65,9 +92,17 @@ export const NodeSettingsPanel: React.FC = () => {
             type="text"
             value={displayId}
             onChange={(e) => handleChange('displayId', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            onBlur={() => markTouched('displayId')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500 ${
+              idError
+                ? 'border-red-400 focus:ring-red-300'
+                : 'border-gray-300 focus:ring-blue-500'
+            }`}
             placeholder="Unique node identifier..."
           />
+          {idError && (
+            <p className="mt-1 text-xs text-red-600">{idError}</p>
+          )}
         </div>
 
         {/* Description */}
@@ -79,10 +114,18 @@ export const NodeSettingsPanel: React.FC = () => {
             id="node-description"
             value={description}
             onChange={(e) => handleChange('description', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            onBlur={() => markTouched('description')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500 resize-none ${
+              descError
+                ? 'border-red-400 focus:ring-red-300'
+                : 'border-gray-300 focus:ring-blue-500'
+            }`}
             rows={3}
             placeholder="What does this node do..."
           />
+          {descError && (
+            <p className="mt-1 text-xs text-red-600">{descError}</p>
+          )}
         </div>
 
         {/* Prompt */}
