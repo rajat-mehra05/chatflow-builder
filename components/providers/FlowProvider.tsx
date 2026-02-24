@@ -11,8 +11,9 @@ import React, {
   Dispatch,
   SetStateAction,
 } from 'react';
-import { FlowNode, FlowEdge, FlowNodeData } from '@/types/flow-types';
+import { FlowNode, FlowEdge, FlowNodeData, FlowEdgeData } from '@/types/flow-types';
 import { loadFlowFromStorage, saveFlowToStorage } from '@/utils/persist-flow';
+import { createFlowEdge, isDuplicateEdge } from '@/utils/create-flow-edge';
 
 interface FlowContextType {
   nodes: FlowNode[];
@@ -26,6 +27,9 @@ interface FlowContextType {
   deleteNode: (nodeId: string) => void;
   selectNode: (nodeId: string | null) => void;
   setStartNode: (nodeId: string) => void;
+  addEdge: (sourceId: string, targetId: string) => void;
+  updateEdgeData: (edgeId: string, data: Partial<FlowEdgeData>) => void;
+  deleteEdge: (edgeId: string) => void;
 }
 
 const FlowContext = createContext<FlowContextType | undefined>(undefined);
@@ -121,6 +125,32 @@ export const FlowProvider: React.FC<FlowProviderProps> = ({ children }) => {
     );
   }, []);
 
+  // --- Edge operations ---
+
+  const addEdge = useCallback((sourceId: string, targetId: string) => {
+    setEdges((eds) => {
+      if (isDuplicateEdge(eds, sourceId, targetId)) return eds;
+      return [...eds, createFlowEdge(sourceId, targetId)];
+    });
+  }, []);
+
+  const updateEdgeData = useCallback(
+    (edgeId: string, dataUpdate: Partial<FlowEdgeData>) => {
+      setEdges((prev) =>
+        prev.map((edge) =>
+          edge.id === edgeId
+            ? { ...edge, data: { condition: '', ...edge.data, ...dataUpdate } }
+            : edge
+        )
+      );
+    },
+    []
+  );
+
+  const deleteEdge = useCallback((edgeId: string) => {
+    setEdges((prev) => prev.filter((edge) => edge.id !== edgeId));
+  }, []);
+
   const value = useMemo<FlowContextType>(
     () => ({
       nodes,
@@ -134,8 +164,15 @@ export const FlowProvider: React.FC<FlowProviderProps> = ({ children }) => {
       deleteNode,
       selectNode,
       setStartNode,
+      addEdge,
+      updateEdgeData,
+      deleteEdge,
     }),
-    [nodes, edges, selectedNode, selectedNodeId, addNode, updateNodeData, deleteNode, selectNode, setStartNode]
+    [
+      nodes, edges, selectedNode, selectedNodeId,
+      addNode, updateNodeData, deleteNode, selectNode, setStartNode,
+      addEdge, updateEdgeData, deleteEdge,
+    ]
   );
 
   return (
