@@ -15,7 +15,7 @@ export const NodeSettingsPanel: React.FC = () => {
 
   const { displayId, description, prompt, isStart } = selectedNode.data;
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: 'displayId' | 'description' | 'prompt', value: string) => {
     updateNodeData(selectedNode.id, { [field]: value });
   };
 
@@ -56,10 +56,11 @@ export const NodeSettingsPanel: React.FC = () => {
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Display ID */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="node-display-id" className="block text-sm font-medium text-gray-700 mb-1">
             Node ID
           </label>
           <input
+            id="node-display-id"
             type="text"
             value={displayId}
             onChange={(e) => handleChange('displayId', e.target.value)}
@@ -70,10 +71,11 @@ export const NodeSettingsPanel: React.FC = () => {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="node-description" className="block text-sm font-medium text-gray-700 mb-1">
             Description
           </label>
           <textarea
+            id="node-description"
             value={description}
             onChange={(e) => handleChange('description', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
@@ -84,10 +86,11 @@ export const NodeSettingsPanel: React.FC = () => {
 
         {/* Prompt */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="node-prompt" className="block text-sm font-medium text-gray-700 mb-1">
             Prompt
           </label>
           <textarea
+            id="node-prompt"
             value={prompt}
             onChange={(e) => handleChange('prompt', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
