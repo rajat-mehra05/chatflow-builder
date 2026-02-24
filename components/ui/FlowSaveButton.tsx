@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useChatbotFlow } from '@/components/providers/ChatbotFlowProvider';
-import { validateChatbotFlow } from '@/lib/flow-validation-rules';
+import { useFlow } from '@/components/providers/FlowProvider';
+import { validateFlow } from '@/lib/flow-validation-rules';
 
 /**
  * Save button component with flow validation
  * Shows error message if validation fails
  */
 export const FlowSaveButton: React.FC = () => {
-  const { nodes, edges } = useChatbotFlow();
+  const { nodes, edges } = useFlow();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -17,7 +17,7 @@ export const FlowSaveButton: React.FC = () => {
     setErrorMessage(null);
     setShowSuccess(false);
 
-    const validation = validateChatbotFlow(nodes, edges);
+    const validation = validateFlow(nodes, edges);
 
     if (!validation.isValid) {
       setErrorMessage(validation.errorMessage || 'Cannot save Flow');

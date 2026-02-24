@@ -1,5 +1,5 @@
-import { FlowNode, FlowEdge } from '@/types/chatbot-flow-types';
-import { getNodesWithEmptyTargetHandles } from '@/utils/chatbot-flow-helpers';
+import { FlowNode, FlowEdge } from '@/types/flow-types';
+import { getNodesWithEmptyTargetHandles } from '@/utils/flow-helpers';
 
 /**
  * Validation result interface
@@ -10,10 +10,10 @@ export interface ValidationResult {
 }
 
 /**
- * Validates the chatbot flow
- * Rule: If there are more than 1 nodes, at most 1 node can have empty target handles
+ * Validates the flow.
+ * Rule: If there are more than 1 nodes, at most 1 node can have empty target handles.
  */
-export const validateChatbotFlow = (
+export const validateFlow = (
   nodes: FlowNode[],
   edges: FlowEdge[]
 ): ValidationResult => {

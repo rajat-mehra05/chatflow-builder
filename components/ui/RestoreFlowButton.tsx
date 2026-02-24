@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useChatbotFlow } from '@/components/providers/ChatbotFlowProvider';
-import { clearFlowStorage } from '@/utils/persist-chatbot-flow';
+import { useFlow } from '@/components/providers/FlowProvider';
+import { clearFlowStorage } from '@/utils/persist-flow';
 
 /**
  * Restore Flow button component
  * Clears all nodes and edges from the flow
  */
 export const RestoreFlowButton: React.FC = () => {
-  const { setNodes, setEdges, deselectNode } = useChatbotFlow();
+  const { setNodes, setEdges, selectNode } = useFlow();
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleRestore = () => {
@@ -20,7 +20,7 @@ export const RestoreFlowButton: React.FC = () => {
     // Clear nodes and edges
     setNodes([]);
     setEdges([]);
-    deselectNode();
+    selectNode(null);
     clearFlowStorage();
     setShowConfirm(false);
   };
