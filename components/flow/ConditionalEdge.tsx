@@ -47,7 +47,7 @@ const ConditionalEdge: React.FC<EdgeProps<FlowEdgeData>> = ({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'all',
             }}
-            className="nodrag nopan bg-white border border-gray-300 rounded px-2 py-0.5 text-xs text-gray-700 shadow-sm max-w-[160px] truncate"
+            className="nodrag nopan bg-white border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 shadow-sm max-w-[200px] text-center leading-snug"
           >
             {condition}
           </div>
