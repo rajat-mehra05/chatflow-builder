@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { flowToSchema } from '@/utils/flow-to-schema';
+import { ImportJsonButton } from '@/components/ui/ImportJsonButton';
 
 /**
  * Simple JSON syntax highlighter using regex tokenization.
@@ -157,6 +158,7 @@ export const JsonPreviewPanel: React.FC = () => {
       <div className="p-3 border-b border-gray-200 bg-white flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">JSON Preview</h3>
         <div className="flex items-center gap-1">
+          <ImportJsonButton />
           <button
             onClick={handleCopy}
             className="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
