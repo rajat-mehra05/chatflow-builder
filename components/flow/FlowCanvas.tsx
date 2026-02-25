@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -35,7 +35,7 @@ const BLOCKING_WARNINGS = new Set([
  * Handles node/edge changes, drag-drop, and pane click deselection.
  */
 export const FlowCanvas: React.FC = () => {
-  const { nodes, edges, setNodes, setEdges, selectNode } = useFlow();
+  const { nodes, edges, setNodes, setEdges, selectNode, selectedNodeId, deleteNode, deleteEdge } = useFlow();
   const { screenToFlowPosition } = useReactFlow();
   const { nodeWarnings } = useFlowValidation(nodes, edges);
 
@@ -111,6 +111,34 @@ export const FlowCanvas: React.FC = () => {
   const onPaneClick = useCallback(() => {
     selectNode(null);
   }, [selectNode]);
+
+  // Delete/Backspace removes selected node or edge (guarded against input focus)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if ((e.target as HTMLElement).isContentEditable) return;
+
+      e.preventDefault();
+
+      // Prefer deleting selected node (cascades to connected edges)
+      if (selectedNodeId) {
+        deleteNode(selectedNodeId);
+        return;
+      }
+
+      // Otherwise delete selected edges
+      const selected = edges.filter((edge) => edge.selected);
+      for (const edge of selected) {
+        deleteEdge(edge.id);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeId, edges, deleteNode, deleteEdge]);
 
   return (
     <div className="w-full h-full" onDrop={onDrop} onDragOver={onDragOver}>

@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { flowToSchema } from '@/utils/flow-to-schema';
+import { ImportJsonButton } from '@/components/ui/ImportJsonButton';
 
 /**
  * Simple JSON syntax highlighter using regex tokenization.
@@ -131,7 +132,7 @@ export const JsonPreviewPanel: React.FC = () => {
       <div className="h-full flex flex-col border-l border-gray-200 bg-gray-50">
         <button
           onClick={() => setCollapsed(false)}
-          className="p-2 hover:bg-gray-100 transition-colors"
+          className="p-2 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600"
           aria-label="Expand JSON preview"
           title="Expand JSON preview"
         >
@@ -154,26 +155,45 @@ export const JsonPreviewPanel: React.FC = () => {
   return (
     <div className="h-full flex flex-col border-l border-gray-200 bg-gray-50 w-80">
       {/* Header */}
-      <div className="p-3 border-b border-gray-200 bg-white flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">JSON Preview</h3>
-        <div className="flex items-center gap-1">
+      <div className="px-3 py-2 border-b border-gray-200 bg-white flex items-center justify-between">
+        <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">JSON Preview</span>
+        <div className="flex items-center gap-0.5">
+          <ImportJsonButton />
           <button
             onClick={handleCopy}
-            className="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
-            title="Copy JSON"
+            className={`p-1.5 rounded transition-colors ${
+              copied ? 'text-green-500' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+            }`}
+            title={copied ? 'Copied!' : 'Copy JSON'}
+            aria-label={copied ? 'Copied' : 'Copy JSON'}
           >
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+              </svg>
+            )}
           </button>
           <button
             onClick={handleDownload}
-            className="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
+            className="p-1.5 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600"
             title="Download JSON"
+            aria-label="Download JSON"
           >
-            Download
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
           </button>
+          <div className="w-px h-4 bg-gray-200 mx-1" />
           <button
             onClick={() => setCollapsed(true)}
-            className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-500"
+            className="p-1.5 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600"
             aria-label="Collapse panel"
             title="Collapse"
           >
