@@ -85,6 +85,12 @@ export const validateImportSchema = (data: unknown): string[] => {
         if (edge.parameters !== undefined) {
           if (typeof edge.parameters !== 'object' || Array.isArray(edge.parameters) || edge.parameters === null) {
             errors.push(`${ep}: "parameters" must be a plain object`);
+          } else {
+            for (const [key, val] of Object.entries(edge.parameters as Record<string, unknown>)) {
+              if (typeof val !== 'string') {
+                errors.push(`${ep}: "parameters.${key}" must be a string`);
+              }
+            }
           }
         }
       }
@@ -193,7 +199,7 @@ export const schemaToFlow = (schema: FlowSchema): ImportResult => {
 
   // Build adjacency for layout (index-based)
   const indexMap = new Map<string, number>();
-  schema.nodes.forEach((n, i) => indexMap.set(n.id, i));
+  schema.nodes.forEach((n, i) => { indexMap.set(n.id, i); });
 
   const adjacency = new Map<number, number[]>();
   for (let i = 0; i < schema.nodes.length; i++) {
