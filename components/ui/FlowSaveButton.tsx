@@ -2,14 +2,16 @@
 
 import React, { useState } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
-import { validateFlow } from '@/lib/flow-validation-rules';
+import { useFlowValidation } from '@/hooks/useFlowValidation';
+import { flowToSchema } from '@/utils/flow-to-schema';
 
 /**
- * Save button component with flow validation
- * Shows error message if validation fails
+ * Export button with validation gating.
+ * Blocks export when blocking errors exist, shows error details.
  */
 export const FlowSaveButton: React.FC = () => {
   const { nodes, edges } = useFlow();
+  const { hasBlockingErrors, flowErrors, nodeWarnings } = useFlowValidation(nodes, edges);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -17,18 +19,34 @@ export const FlowSaveButton: React.FC = () => {
     setErrorMessage(null);
     setShowSuccess(false);
 
-    const validation = validateFlow(nodes, edges);
-
-    if (!validation.isValid) {
-      setErrorMessage(validation.errorMessage || 'Cannot save Flow');
+    if (hasBlockingErrors) {
+      const errors: string[] = [...flowErrors];
+      for (const [, msgs] of nodeWarnings) {
+        for (const msg of msgs) {
+          if (!errors.includes(msg)) errors.push(msg);
+        }
+      }
+      setErrorMessage(errors.slice(0, 3).join(', '));
       return;
     }
 
-    // Show success state
-    setShowSuccess(true);
+    // Export the schema as JSON download
+    const schema = flowToSchema(nodes, edges);
+    const json = JSON.stringify(schema, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'flow.json';
+    document.body.appendChild(a);
+    a.click();
     setTimeout(() => {
-      setShowSuccess(false);
-    }, 2000);
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   return (
@@ -41,7 +59,7 @@ export const FlowSaveButton: React.FC = () => {
             : 'bg-blue-500 text-white hover:bg-blue-600'
         }`}
       >
-        {showSuccess ? 'Saved!' : 'Save Changes'}
+        {showSuccess ? 'Exported!' : 'Export JSON'}
       </button>
 
       {/* Error message */}

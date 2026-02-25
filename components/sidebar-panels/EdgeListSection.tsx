@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { FlowEdge } from '@/types/flow-types';
 
@@ -9,12 +9,46 @@ interface EdgeListSectionProps {
 }
 
 /**
+ * Inline input that uses local draft state and commits on blur.
+ * Prevents mid-keystroke state churn in the global edge data.
+ */
+const DraftInput: React.FC<{
+  value: string;
+  onCommit: (value: string) => void;
+  onBlurExtra?: () => void;
+  className?: string;
+  placeholder?: string;
+}> = ({ value, onCommit, onBlurExtra, className, placeholder }) => {
+  const [draft, setDraft] = useState(value);
+
+  // Sync draft when external value changes (e.g. edge replaced)
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        if (draft !== value) onCommit(draft);
+        onBlurExtra?.();
+      }}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+};
+
+/**
  * Edge management section for the selected node.
  * Shows outgoing edges with condition editing, parameters, and add/remove controls.
  */
 export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
   const { nodes, edges, addEdge, updateEdgeData, deleteEdge } = useFlow();
   const [addingEdge, setAddingEdge] = useState(false);
+  const [touchedConditions, setTouchedConditions] = useState<Set<string>>(new Set());
 
   const outgoingEdges = edges.filter((e) => e.source === nodeId);
 
@@ -28,15 +62,11 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
     setAddingEdge(false);
   };
 
-  const handleConditionChange = (edgeId: string, condition: string) => {
-    updateEdgeData(edgeId, { condition });
-  };
-
   // --- Parameter helpers (array-based to avoid key collisions) ---
 
   const handleParamAdd = (edge: FlowEdge) => {
     const params = [...(edge.data?.parameters || [])];
-    params.push({ key: '', value: '' });
+    params.push({ id: crypto.randomUUID(), key: '', value: '' });
     updateEdgeData(edge.id, { parameters: params });
   };
 
@@ -119,7 +149,14 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
               </span>
               <button
                 type="button"
-                onClick={() => deleteEdge(edge.id)}
+                onClick={() => {
+                  deleteEdge(edge.id);
+                  setTouchedConditions((prev) => {
+                    const next = new Set(prev);
+                    next.delete(edge.id);
+                    return next;
+                  });
+                }}
                 className="text-gray-400 hover:text-red-500 transition-colors"
                 aria-label="Delete edge"
               >
@@ -129,16 +166,23 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
               </button>
             </div>
 
-            {/* Condition input */}
+            {/* Condition input — commits on blur */}
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Condition</label>
-              <input
-                type="text"
+              <DraftInput
                 value={edge.data?.condition || ''}
-                onChange={(e) => handleConditionChange(edge.id, e.target.value)}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                onCommit={(val) => updateEdgeData(edge.id, { condition: val })}
+                onBlurExtra={() => setTouchedConditions((prev) => new Set(prev).add(edge.id))}
+                className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 ${
+                  touchedConditions.has(edge.id) && !edge.data?.condition?.trim()
+                    ? 'border-amber-400 focus:ring-amber-300'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="e.g., user responds positively"
               />
+              {touchedConditions.has(edge.id) && !edge.data?.condition?.trim() && (
+                <p className="mt-1 text-xs text-amber-600">Condition is empty</p>
+              )}
             </div>
 
             {/* Parameters */}
@@ -157,18 +201,16 @@ export const EdgeListSection: React.FC<EdgeListSectionProps> = ({ nodeId }) => {
                 <p className="text-xs text-gray-300 italic">None</p>
               )}
               {params.map((param, idx) => (
-                <div key={idx} className="flex gap-1 mb-1">
-                  <input
-                    type="text"
+                <div key={param.id || idx} className="flex gap-1 mb-1">
+                  <DraftInput
                     value={param.key}
-                    onChange={(e) => handleParamKeyChange(edge, idx, e.target.value)}
+                    onCommit={(val) => handleParamKeyChange(edge, idx, val)}
                     className="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 rounded"
                     placeholder="key"
                   />
-                  <input
-                    type="text"
+                  <DraftInput
                     value={param.value}
-                    onChange={(e) => handleParamValueChange(edge, idx, e.target.value)}
+                    onCommit={(val) => handleParamValueChange(edge, idx, val)}
                     className="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 rounded"
                     placeholder="value"
                   />

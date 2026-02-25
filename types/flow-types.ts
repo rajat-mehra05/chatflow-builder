@@ -21,6 +21,8 @@ export interface FlowNodeData {
   description: string;
   prompt: string;
   isStart: boolean;
+  /** Runtime-only: validation warnings injected by FlowCanvas. Not persisted. */
+  _warnings?: string[];
 }
 
 /**
@@ -31,7 +33,7 @@ export interface FlowNodeData {
  */
 export interface FlowEdgeData {
   condition: string;
-  parameters?: Array<{ key: string; value: string }>;
+  parameters?: Array<{ id: string; key: string; value: string }>;
 }
 
 /**

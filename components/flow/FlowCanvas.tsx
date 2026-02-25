@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -22,6 +22,13 @@ import { defaultEdgeOptions, defaultViewport } from '@/lib/reactflow-canvas-conf
 import { createFlowNode } from '@/utils/create-flow-node';
 import { createFlowEdge, isDuplicateEdge } from '@/utils/create-flow-edge';
 import { FLOW_NODE_TYPE, FlowNode, FlowEdge } from '@/types/flow-types';
+import { useFlowValidation } from '@/hooks/useFlowValidation';
+
+const BLOCKING_WARNINGS = new Set([
+  'Node ID is empty',
+  'Duplicate node ID',
+  'Description is empty',
+]);
 
 /**
  * Main React Flow canvas component.
@@ -30,6 +37,21 @@ import { FLOW_NODE_TYPE, FlowNode, FlowEdge } from '@/types/flow-types';
 export const FlowCanvas: React.FC = () => {
   const { nodes, edges, setNodes, setEdges, selectNode } = useFlow();
   const { screenToFlowPosition } = useReactFlow();
+  const { nodeWarnings } = useFlowValidation(nodes, edges);
+
+  // Enrich nodes: inject _warnings for badge display, add CSS class for blocking errors
+  const enrichedNodes = useMemo(() => {
+    return nodes.map((n) => {
+      const warnings = nodeWarnings.get(n.id);
+      if (!warnings || warnings.length === 0) return n;
+      const hasBlockingError = warnings.some((w) => BLOCKING_WARNINGS.has(w));
+      return {
+        ...n,
+        className: hasBlockingError ? 'validation-error' : n.className,
+        data: { ...n.data, _warnings: warnings },
+      };
+    });
+  }, [nodes, nodeWarnings]);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -93,7 +115,7 @@ export const FlowCanvas: React.FC = () => {
   return (
     <div className="w-full h-full" onDrop={onDrop} onDragOver={onDragOver}>
       <ReactFlow
-        nodes={nodes}
+        nodes={enrichedNodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
