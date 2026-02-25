@@ -84,10 +84,15 @@ export const ImportJsonButton: React.FC = () => {
     <>
       <button
         onClick={handleOpen}
-        className="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
+        className="p-1.5 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600"
         title="Import JSON"
+        aria-label="Import JSON"
       >
-        Import
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
       </button>
 
       {showModal && (
