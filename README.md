@@ -1,77 +1,76 @@
-# Chatbot Flow Builder
+# Flow Builder
 
-A drag-and-drop chatbot flow builder built with Next.js, React Flow, and TypeScript.
-
-### GIF
-
-![chatflow](https://github.com/user-attachments/assets/608d7daf-180c-486a-b730-60237d574c07)
+A single-page visual flow builder where users construct flows on a canvas and export them as JSON. Built with Next.js 14, React Flow 11, TypeScript, and Tailwind CSS.
 
 ## Features
 
-- **Text Message Nodes**: Create and edit text messages in your chatbot flow
-- **Button Nodes**: Add interactive buttons with custom text and values
-- **Drag & Drop**: Easily add nodes by dragging from the nodes panel
-- **Visual Flow**: Connect nodes to create conversation flows
-- **Settings Panel**: Edit node properties when selected
-- **Auto-save**: Flow state is automatically saved to localStorage
-- **Validation**: Save button validates flow structure before saving
+### Canvas
+- **Drag & drop** nodes from the sidebar onto the canvas
+- **Connect nodes** by drawing edges between handles
+- **Edge condition labels** displayed on the canvas with text wrapping
+- **Visual start node** indicator (amber header + star icon)
+- **Validation badges** on nodes with warnings (amber border + badge)
+- **Delete key / Backspace** removes selected node or edge (guarded against input focus)
+- Pan, zoom, minimap, and fit-to-view controls
+
+### Node Sidebar
+- **Editable node ID** (displayId) with uniqueness validation
+- **Description** and **prompt** fields with required-field validation
+- **Start node toggle** (enforces single start node)
+- **Outgoing edge management** — add, remove, edit condition text, and set target node
+- **Edge parameters** — optional key-value pairs per edge
+- **Touched-state validation** — inline errors shown only after the user interacts with a field (blur), not on creation
+
+### JSON Preview Panel (collapsible)
+- **Live JSON preview** derived from canvas state, updated on every change
+- **Syntax highlighting** (CSS-based regex tokenizer, no external dependency)
+- **Copy to clipboard** with checkmark feedback
+- **Download** as `.json` file
+- **Import JSON** — paste or upload a `.json` file to replace the current flow with schema validation and BFS auto-layout
+
+### Validation
+- Node IDs must be unique (inline error)
+- Description is required (inline error)
+- Start node must exist (banner warning)
+- Disconnected / orphaned node warnings (canvas badge)
+- Edge missing condition text warning
+- Export blocked when blocking errors exist
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 
 ### Installation
 
-1. Install dependencies:
 ```bash
 npm install
-```
-
-2. Run the development server:
-```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Usage
+## Design Decisions
 
-1. **Add Nodes**: Drag a node from the "Nodes Panel" on the right and drop it onto the canvas
-2. **Connect Nodes**: Click and drag from a node's source handle (right side) to another node's target handle (left side)
-3. **Edit Nodes**: Click on a node to select it and edit its properties in the settings panel
-4. **Save Flow**: Click "Save Changes" to validate and save your flow
+| Decision | Rationale |
+|----------|-----------|
+| **Internal UUID vs user-facing displayId** | React Flow uses `node.id` as React key. Mutating it destroys/recreates the node. We use an internal UUID as `node.id` and store the editable ID in `node.data.displayId`. |
+| **Derive JSON, don't store it** | The JSON preview is computed from canvas state via `useMemo`. Single source of truth — no sync bugs. |
+| **Derive selectedNode, don't snapshot it** | Store `selectedNodeId` only; derive the node object from the current `nodes` array via `useMemo`. Prevents stale sidebar data. |
+| **Context API, not Redux** | App is small. Context + `useMemo` is sufficient. Redux/Zustand would be overengineering. |
+| **Touched-state validation** | Don't show errors on fields the user hasn't interacted with. Validate on blur, not on mount. |
+| **CSS syntax highlighting** | Read-only JSON display doesn't need a code editor. A regex tokenizer keeps the bundle small. |
+| **BFS auto-layout on import** | Imported JSON has no position data. BFS from the start node produces a clean hierarchical layout without adding a dependency like dagre. |
+| **Import = clear + replace** | Merging imported flow with existing flow is complex and error-prone. Replace with confirmation warning. |
+| **Allow self-referencing edges** | Valid for conversation flows (e.g., retry loops). React Flow renders these as loop arcs. |
+| **Omit empty parameters** | Schema says `parameters?` (optional). Cleaner JSON when omitted vs `parameters: {}`. |
 
-## Project Structure
-
-- `app/` - Next.js app directory with pages and layout
-- `components/` - React components (flow nodes, panels, providers)
-- `types/` - TypeScript type definitions
-- `utils/` - Utility functions (node creation, helpers, persistence)
-- `lib/` - Library configurations and validation logic
-
-## Extending the Builder
-
-The codebase is designed to be extensible:
-
-1. **Add New Node Types**: 
-   - Define the node data type in `types/chatbot-flow-types.ts`
-   - Create the node component in `components/chatbot-flow/`
-   - Register it in `components/chatbot-flow/chatbot-node-registry.tsx`
-   - Add creation function in `utils/create-chatbot-node.ts`
-   - Add card in `components/sidebar-panels/AvailableNodesPanel.tsx`
-   - Add form fields in `components/sidebar-panels/NodeSettingsPanel.tsx`
-
-2. **Add Validation Rules**: Extend `lib/flow-validation-rules.ts`
-
-3. **Modify Persistence**: Update `utils/persist-chatbot-flow.ts`
-
-## Technologies Used
+## Technologies
 
 - Next.js 14
 - React 18
 - React Flow 11
-- TypeScript
-- TailwindCSS
+- TypeScript (strict)
+- Tailwind CSS
