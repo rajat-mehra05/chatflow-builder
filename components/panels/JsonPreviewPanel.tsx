@@ -4,6 +4,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useFlow } from '@/components/providers/FlowProvider';
 import { flowToSchema } from '@/utils/flow-to-schema';
 import { ImportJsonButton } from '@/components/ui/ImportJsonButton';
+import { useFlowValidation } from '@/hooks/useFlowValidation';
 
 /**
  * Simple JSON syntax highlighter using regex tokenization.
@@ -82,6 +83,7 @@ const highlightJson = (json: string): React.ReactNode[] => {
  */
 export const JsonPreviewPanel: React.FC = () => {
   const { nodes, edges } = useFlow();
+  const { hasBlockingErrors } = useFlowValidation(nodes, edges);
   const [collapsed, setCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -114,6 +116,7 @@ export const JsonPreviewPanel: React.FC = () => {
   };
 
   const handleDownload = () => {
+    if (hasBlockingErrors) return;
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -180,9 +183,14 @@ export const JsonPreviewPanel: React.FC = () => {
           </button>
           <button
             onClick={handleDownload}
-            className="p-1.5 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600"
-            title="Download JSON"
-            aria-label="Download JSON"
+            disabled={hasBlockingErrors}
+            className={`p-1.5 rounded transition-colors ${
+              hasBlockingErrors
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+            }`}
+            title={hasBlockingErrors ? 'Fix errors before downloading' : 'Download JSON'}
+            aria-label={hasBlockingErrors ? 'Download blocked — fix errors' : 'Download JSON'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
